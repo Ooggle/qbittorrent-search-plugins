@@ -55,24 +55,21 @@ class gazellegames(object):
     # DO NOT CHANGE the name and parameters of this function
     # This function will be the one called by nova2.py
     def search(self, what, cat="all"):
-        base_url = "%s/api.php?request=search" % self.url
 
         payload = {"search_type": "torrents", "searchstr": parse.unquote(what)}
         if cat != "all":
             payload["filter_cat[%s]" % self.supported_categories[cat]] = 1
 
-        data = parse.urlencode(payload) # , "filter_cat[1]": "1"
+        data = parse.urlencode(payload)
         data = data.encode('ascii')
 
         opener = request.build_opener()
         opener.addheaders = [("X-API-Key", self.token)]
-        with opener.open("https://gazellegames.net/api.php?request=search", data=data) as f:
+        with opener.open("%s/api.php?request=search" % self.url, data=data) as f:
             result_text = f.read().decode('utf-8')
 
         search_result = loads(result_text)["response"]
-        #print("│\x1b[1mResults for \x1b[1;33m%s\x1b[0m:" % what)
         for torrent_groups in search_result:
-            #print("└ \x1b[0;36m%s\x1b[0m" % search_result[torrent_groups]["Name"])
             for torrents in search_result[torrent_groups]["Torrents"]:
                 t = search_result[torrent_groups]["Torrents"][torrents]
 
@@ -89,7 +86,6 @@ class gazellegames(object):
                     additional_infos_string+= ")"
                     final_torrent_string = "%s --- %s" % (t["ReleaseTitle"], additional_infos_string)
                     final_torrent_string = final_torrent_string.replace("|", "")
-                    #final_torrent_string = " └-- \x1b[0;36m%s\x1b[0m %s" % (t["ReleaseTitle"], additional_infos_string)
 
                     line = {"link": "%s/torrents.php?action=download&id=%s&authkey=%s&torrent_pass=%s" % (self.url, t["ID"], authkey, torrent_pass),
                             "name": final_torrent_string,
