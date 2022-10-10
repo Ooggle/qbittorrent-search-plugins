@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # File name          : gazellegames.py
-# Version            : 1.1
+# Version            : 1.2
 # Author             : Ooggle (@Ooggle_)
-# Date created       : 21 Jun 2022
+# Date created       : 07 Oct 2022
 
 # MIT License
 # 
@@ -30,20 +30,16 @@ from json import loads
 
 from novaprinter import prettyPrinter
 
-# you need to generate a token in your settings -> API Keys section
+# you need to generate a token in your settings -> API Keys section (select "User" and "Torrents" permissions for the engine to work)
 # https://gazellegames.net/user.php?action=edit
 api_token = ""
-
-# ONLY USED FOR DIRECT TORRENT DOWNLOAD, don't bother if you do not use the torrent download feature
-# the authkey and torrent_pass can be retrieved when copying the download link of any torrent, those values are passed in parameter
-# example: https://gazellegames.net/torrents.php?action=download&id=XXXX&authkey=AAAA&torrent_pass=BBBB -> set authkey to "AAAA" and torrent_pass to "BBBB"
-authkey = ""
-torrent_pass = ""
 
 class gazellegames(object):
     url = "https://gazellegames.net"
     name = "gazellegames"
     token = api_token
+    authkey = ""
+    torrent_pass = ""
     supported_categories = {
         "all":      "0",
         "games":    "1",
@@ -55,7 +51,17 @@ class gazellegames(object):
     # DO NOT CHANGE the name and parameters of this function
     # This function will be the one called by nova2.py
     def search(self, what, cat="all"):
+        # retrieve the authkey + torrent_pass
+        opener = request.build_opener()
+        opener.addheaders = [("X-API-Key", self.token)]
+        with opener.open("%s/api.php?request=quick_user" % self.url) as f:
+            result_text = f.read().decode('utf-8')
 
+        user_result = loads(result_text)["response"]
+        self.authkey = user_result["authkey"]
+        self.torrent_pass = user_result["passkey"]
+
+        # perform the actual search
         payload = {"search_type": "torrents", "searchstr": parse.unquote(what)}
         if cat != "all":
             payload["filter_cat[%s]" % self.supported_categories[cat]] = 1
@@ -87,7 +93,7 @@ class gazellegames(object):
                     final_torrent_string = "%s --- %s" % (t["ReleaseTitle"], additional_infos_string)
                     final_torrent_string = final_torrent_string.replace("|", "")
 
-                    line = {"link": "%s/torrents.php?action=download&id=%s&authkey=%s&torrent_pass=%s" % (self.url, t["ID"], authkey, torrent_pass),
+                    line = {"link": "%s/torrents.php?action=download&id=%s&authkey=%s&torrent_pass=%s" % (self.url, t["ID"], self.authkey, self.torrent_pass),
                             "name": final_torrent_string,
                             "size": "%s B" % t["Size"],
                             "seeds": t["Seeders"],
