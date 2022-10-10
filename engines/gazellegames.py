@@ -38,8 +38,6 @@ class gazellegames(object):
     url = "https://gazellegames.net"
     name = "gazellegames"
     token = api_token
-    authkey = ""
-    torrent_pass = ""
     supported_categories = {
         "all":      "0",
         "games":    "1",
@@ -58,8 +56,8 @@ class gazellegames(object):
             result_text = f.read().decode('utf-8')
 
         user_result = loads(result_text)["response"]
-        self.authkey = user_result["authkey"]
-        self.torrent_pass = user_result["passkey"]
+        authkey = user_result["authkey"]
+        torrent_pass = user_result["passkey"]
 
         # perform the actual search
         payload = {"search_type": "torrents", "searchstr": parse.unquote(what)}
@@ -93,7 +91,7 @@ class gazellegames(object):
                     final_torrent_string = "%s --- %s" % (t["ReleaseTitle"], additional_infos_string)
                     final_torrent_string = final_torrent_string.replace("|", "")
 
-                    line = {"link": "%s/torrents.php?action=download&id=%s&authkey=%s&torrent_pass=%s" % (self.url, t["ID"], self.authkey, self.torrent_pass),
+                    line = {"link": "%s/torrents.php?action=download&id=%s&authkey=%s&torrent_pass=%s" % (self.url, t["ID"], authkey, torrent_pass),
                             "name": final_torrent_string,
                             "size": "%s B" % t["Size"],
                             "seeds": t["Seeders"],
